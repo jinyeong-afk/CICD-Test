@@ -1,14 +1,49 @@
-node {
-  stage('========== Clone repository ==========') {
-   checkout scm
-  }
-  stage('========== Build image ==========') {
-   app = docker.build("jenkins-docker-pipeline/my-image")
+pipeline {
+    agent any
+    options {
+        timeout(time: 1, unit: 'HOURS')
+    }
+    environment {
+        SOURCECODE_JENKINS_CREDENTIAL_ID = 'jenking-github-wh'
+        SOURCE_CODE_URL = 'https://github.com/jinyeong-afk/CICD-Test.git'
+        RELEASE_BRANCH = 'master'
+    }
+    stages {
+        stage('Init') {
+            steps {
+                echo 'clear'
+                sh 'docker stop $(docker ps -aq)'
+                sh 'docker rm $(docker ps -aq)'
+                deleteDir()
+            }
+        }
+
+        stage('clone') {
+            steps {
+                git url: "$SOURCE_CODE_URL",
+                    branch: "$RELEASE_BRANCH",
+                    credentialsId: "$SOURCECODE_JENKINS_CREDENTIAL_ID"
+                sh "ls -al"
+            }
+        }
+
+        stage('dockerizing') {
+            steps {
+                   sh "pwd"
+                   sh "gradle clean"
+                   sh "gradle bootJar"
+
+                   sh "docker build -t CICD-Test ."
+            }
+        }
+
+        stage('deploy') {
+            steps {
+                sh '''
+
+                  docker run -d -p 8080:8080 CICD-Test
+                '''
+            }
+        }
+    }
 }
-  stage('========== Push image ==========') {
-   docker.withRegistry('YOUR_REGISTRY', 'YOUR_CREDENTIAL') {
-    app.push("${env.BUILD_NUMBER}")
-    app.push("latest")
-   }
-  }
- }
