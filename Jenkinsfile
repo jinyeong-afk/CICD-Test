@@ -33,7 +33,7 @@ pipeline {
                    sh "gradle clean"
                    sh "gradle bootJar"
 
-                   sh "docker build -t test-build ."
+                   sh "docker build -t CICD-Test ."
             }
         }
 
@@ -41,7 +41,7 @@ pipeline {
             steps {
                 sh '''
 
-                  docker run -d -p 8080:8080 test-build
+                  docker run -d -p 8080:8080 CICD-Test
                 '''
             }
         }
